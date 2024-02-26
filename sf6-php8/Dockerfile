@@ -13,7 +13,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
     &&  mv composer.phar /usr/local/bin/composer
 
 RUN curl -sS https://get.symfony.com/cli/installer | bash \
-    &&  mv /root/.symfony/bin/symfony /usr/local/bin
+    &&  mv /root/.symfony5/bin/symfony /usr/local/bin
 
 RUN docker-php-ext-configure \
             intl \

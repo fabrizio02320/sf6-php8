@@ -1,16 +1,12 @@
 version: '3.7'
 services:
-    php8-sf6:
-        container_name: php8-sf6
-        build: php8-sf6
+    sf6-php8:
+        container_name: sf6-php8
+        build: sf6-php8
         ports:
             - "9000:8000"
         volumes:
             - ./project:/var/www/html
-
-    mailer:
-        image: schickling/mailcatcher
-        ports: [1025, 1080]
 
     database:
         image: postgres:13-alpine
@@ -21,7 +17,7 @@ services:
         volumes:
             - db-data:/var/lib/postgresql/data:rw
         ports:
-            - "5432"
+            - "6543:5432"
 
 volumes:
   db-data:

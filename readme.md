@@ -9,8 +9,11 @@ A very simple Docker-compose to discover Symfony 6 with PHP 8.0.13 in 5 minutes
 Clone the project
 
 ```bash
-  git@github.com:yoanbernabeu/symfony6-php8-in-docker-compose.git
+  git@github.com:fabrizio02320/sf6-php8.git
 ```
+
+Update git config to your own into Dockerfile
+
 
 Run the docker-compose
 
@@ -22,14 +25,14 @@ Run the docker-compose
 Log into the PHP container
 
 ```bash
-  docker exec -it php8-sf6 bash
+  docker exec -it sf6-php8 bash
 ```
 
 Create your Symfony application and launch the internal server
 
 ```bash
-  symfony new new-project --full
-  cd new-project
+  symfony new project-name --webapp
+  cd project-name
   symfony serve -d
 ```
 
@@ -58,7 +61,6 @@ This docker-compose provides you :
     - and some other php extentions
     - nodejs, npm, yarn
 - postgres:13-alpine
-- mailcatcher
 
 
 ## Requirements
@@ -68,6 +70,3 @@ Out of the box, this docker-compose is designed for a Linux operating system, pr
 - Linux (Ubuntu 20.04 or other)
 - Docker
 - Docker-compose
-## Author
-
-- [@yoanbernabeu](https://github.com/yoanbernabeu)
