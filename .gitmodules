@@ -1,0 +1,3 @@
+[submodule "sf6-php8"]
+	path = sf6-php8
+	url = https://github.com/fabrizio02320/sf6-php8.git
