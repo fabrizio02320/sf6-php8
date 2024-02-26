@@ -36,7 +36,7 @@ Create your Symfony application and launch the internal server
   symfony serve -d
 ```
 
-Create an account (identical to your local session)
+Create an account (identical to your local session) into PHP container
 
 ```bash
   adduser username
