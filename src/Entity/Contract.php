@@ -11,6 +11,37 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ContractRepository::class)]
 class Contract
 {
+    const STATUS_IN_PROGRESS = 'in_progress';
+    const STATUS_IN_PAYMENT = 'in_payment';
+    const STATUS_UNPAID = 'unpaid';
+    const STATUS_TERMINATED = 'terminated';
+    const ALL_STATUS = [
+        self::STATUS_IN_PROGRESS,
+        self::STATUS_IN_PAYMENT,
+        self::STATUS_UNPAID,
+        self::STATUS_TERMINATED,
+    ];
+
+    const DEBIT_MODE_CB = 'cb';
+    const DEBIT_MODE_SEPA = 'sepa';
+    const DEBIT_MODE_NOTHING = 'nothing';
+    const ALL_DEBIT_MODE = [
+        self::DEBIT_MODE_CB,
+        self::DEBIT_MODE_SEPA,
+        self::DEBIT_MODE_NOTHING,
+    ];
+
+    const RECURRENCE_MONTHLY = 'monthly';
+    const RECURRENCE_QUARTERLY = 'quarterly';
+    const RECURRENCE_SEMI_ANNUAL = 'semi-annual';
+    const RECURRENCE_ANNUAL = 'annual';
+    const ALL_RECURRENCE = [
+        self::RECURRENCE_MONTHLY,
+        self::RECURRENCE_QUARTERLY,
+        self::RECURRENCE_SEMI_ANNUAL,
+        self::RECURRENCE_ANNUAL,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -43,7 +74,7 @@ class Contract
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\OneToMany(mappedBy: 'contractId', targetEntity: Receipt::class, orphanRemoval: true)]
