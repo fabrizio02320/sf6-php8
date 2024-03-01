@@ -31,7 +31,7 @@ class ContractRepository extends ServiceEntityRepository
                 'c.receipts',
                 'r',
                 Expr\Join::WITH,
-                'r.startApplication <= :debitDate AND r.endApplication >= :debitDate'
+                'r.startApplyAt <= :debitDate AND r.endApplyAt >= :debitDate'
             )
             ->where('c.status = :status')
             ->andWhere('c.effectiveDate <= :debitDate')

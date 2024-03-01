@@ -79,7 +79,7 @@ class Contract
     #[ORM\Column(nullable: true)]
     private ?DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'contractId', targetEntity: Receipt::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'contract', targetEntity: Receipt::class, orphanRemoval: true)]
     private Collection $receipts;
 
     public function __construct()

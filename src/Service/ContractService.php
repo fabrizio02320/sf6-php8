@@ -18,10 +18,9 @@ class  ContractService
      */
     public function findContractsToBilling(DateTimeImmutable $debitDate): array
     {
-        $contracts = [];
         // find about SEPA and CB mode
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDate);
-        $contracts[] = $this->contractRepository->findContractsToBilling(
+        $contracts = $this->contractRepository->findContractsToBilling(
             $debitDate,
             $debitDaysConcerned,
             [Contract::DEBIT_MODE_CB, Contract::DEBIT_MODE_SEPA],
@@ -30,7 +29,7 @@ class  ContractService
         // find about nothing mode
         $debitDateWithNothing = $debitDate->modify('+30 days');
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDateWithNothing);
-        $contracts[] = $this->contractRepository->findContractsToBilling(
+        $contractsWithNothing = $this->contractRepository->findContractsToBilling(
             $debitDateWithNothing,
             $debitDaysConcerned,
             [Contract::DEBIT_MODE_NOTHING],
@@ -38,7 +37,7 @@ class  ContractService
 
         // gestion des relances a voir plus tard
 
-        return $contracts;
+        return array_merge($contracts, $contractsWithNothing);
     }
 
     public function getDebitDaysConcerned(DateTimeImmutable $debitDate): array

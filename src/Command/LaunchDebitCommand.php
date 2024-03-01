@@ -90,10 +90,17 @@ EOS
         // get le nombre de quittance qui sera générée
         // get le nombre de relance qui sera envoyée
         // recap nb de contract impacté ? (+ nb de quittance a créér + nb transaction a realiser)
-        $confirmResult = $this->io->confirm(sprintf(
-            'Found %d contracts to bill, do you want to continue ?',
+
+        $this->io->info(sprintf(
+            'Found %d contracts to collect',
             $nbContract
-        ), false);
+        ));
+        $this->io->section(sprintf('Contracts impacted (external_id with id) by the debit on %s', $debitDate->format('Y-m-d')));
+        foreach ($contracts as $contract) {
+            $this->io->writeln(sprintf(' - %s (%s)', $contract->getExternalId(), $contract->getId()));
+        }
+
+        $confirmResult = $this->io->confirm('Do you want to continue ?', false);
 
         if (!$confirmResult) {
             $this->io->warning('Operation aborted');
@@ -109,8 +116,6 @@ EOS
 
             $receipt = $contract->getReceiptOnDate($receiptDate);
         }
-            // si l'on doit gérer les pb lié à l'appel du gestionnaire de prelevement, voir
-                // si l'on créer tout de meme une quittance et une transaction ?
             // create quittance si pas deja existante, sinon get it
             // create transaction avec statut create sur la quittance, si mode de paiement du contrat != aucun
             // result = mock du paiement avec réponse aléatoire
