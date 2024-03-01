@@ -17,7 +17,7 @@ class ContractFactory
         string $recurrence,
         ?string $externalId = null,
         ?\DateTimeImmutable $createdAt = null,
-    ) {
+    ): Contract {
         if (false === in_array($status, Contract::ALL_STATUS, true)) {
             throw new \Exception(sprintf('Create contract with status %s is forbidden', $status));
         }
