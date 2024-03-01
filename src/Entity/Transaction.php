@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\TransactionRepository;
+use DateTimeImmutable;
+use DateTimeInterface;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
@@ -16,16 +18,16 @@ class Transaction
 
     #[ORM\ManyToOne(inversedBy: 'transactions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Receipt $receiptId = null;
+    private ?Receipt $receipt = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $transactionDate = null;
+    private DateTimeInterface $transactionDate;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $paymentDate = null;
+    private DateTimeInterface $paidAt;
 
     #[ORM\Column]
-    private ?float $amount = null;
+    private ?float $amount;
 
     #[ORM\Column(length: 255)]
     private ?string $status = null;
@@ -34,56 +36,56 @@ class Transaction
     private ?string $failureReason = null;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
-    private ?\DateTimeInterface $failureDate = null;
+    private ?DateTimeInterface $failedAt = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private DateTimeImmutable $createdAt;
 
     #[ORM\Column(nullable: true)]
-    private ?\DateTimeImmutable $updatedAt = null;
+    private ?DateTimeImmutable $updatedAt = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getReceiptId(): ?Receipt
+    public function getReceipt(): ?Receipt
     {
-        return $this->receiptId;
+        return $this->receipt;
     }
 
-    public function setReceiptId(?Receipt $receiptId): static
+    public function setReceipt(?Receipt $receipt): static
     {
-        $this->receiptId = $receiptId;
+        $this->receipt = $receipt;
 
         return $this;
     }
 
-    public function getTransactionDate(): ?\DateTimeInterface
+    public function getTransactionDate(): DateTimeInterface
     {
         return $this->transactionDate;
     }
 
-    public function setTransactionDate(\DateTimeInterface $transactionDate): static
+    public function setTransactionDate(DateTimeInterface $transactionDate): static
     {
         $this->transactionDate = $transactionDate;
 
         return $this;
     }
 
-    public function getPaymentDate(): ?\DateTimeInterface
+    public function getPaidAt(): ?DateTimeInterface
     {
-        return $this->paymentDate;
+        return $this->paidAt;
     }
 
-    public function setPaymentDate(\DateTimeInterface $paymentDate): static
+    public function setPaidAt(DateTimeInterface $paidAt): static
     {
-        $this->paymentDate = $paymentDate;
+        $this->paidAt = $paidAt;
 
         return $this;
     }
 
-    public function getAmount(): ?float
+    public function getAmount(): float
     {
         return $this->amount;
     }
@@ -119,36 +121,36 @@ class Transaction
         return $this;
     }
 
-    public function getFailureDate(): ?\DateTimeInterface
+    public function getFailedAt(): ?DateTimeInterface
     {
-        return $this->failureDate;
+        return $this->failedAt;
     }
 
-    public function setFailureDate(?\DateTimeInterface $failureDate): static
+    public function setFailedAt(?DateTimeInterface $failedAt): static
     {
-        $this->failureDate = $failureDate;
+        $this->failedAt = $failedAt;
 
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeImmutable $createdAt): static
+    public function setCreatedAt(DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
 
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeImmutable
+    public function getUpdatedAt(): ?DateTimeImmutable
     {
         return $this->updatedAt;
     }
 
-    public function setUpdatedAt(\DateTimeImmutable $updatedAt): static
+    public function setUpdatedAt(DateTimeImmutable $updatedAt): static
     {
         $this->updatedAt = $updatedAt;
 

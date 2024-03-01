@@ -11,6 +11,26 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: ReceiptRepository::class)]
 class Receipt
 {
+    public const STATUS_IN_PAYMENT = 'in_payment';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_UNPAID = 'unpaid';
+    public const STATUS_TO_PAY = 'to_pay';
+    public const ALL_STATUS = [
+        self::STATUS_IN_PAYMENT,
+        self::STATUS_PAID,
+        self::STATUS_UNPAID,
+        self::STATUS_TO_PAY,
+    ];
+
+    public const PAYMENT_MODE_CB = 'cb';
+    public const PAYMENT_MODE_SEPA = 'sepa';
+    public const PAYMENT_MODE_NULL = null;
+    public const ALL_PAYMENT_MODE = [
+        self::PAYMENT_MODE_CB,
+        self::PAYMENT_MODE_SEPA,
+        self::PAYMENT_MODE_NULL,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -18,16 +38,16 @@ class Receipt
 
     #[ORM\ManyToOne(inversedBy: 'receipts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Contract $contractId = null;
+    private ?Contract $contract = null;
 
     #[ORM\Column(length: 255)]
     private ?string $externalId = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $startApplication = null;
+    private ?\DateTimeInterface $startApplyAt = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
-    private ?\DateTimeInterface $endApplication = null;
+    private ?\DateTimeInterface $endApplyAt = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     private ?\DateTimeInterface $dueDate = null;
@@ -60,14 +80,14 @@ class Receipt
         return $this->id;
     }
 
-    public function getContractId(): ?Contract
+    public function getContract(): ?Contract
     {
-        return $this->contractId;
+        return $this->contract;
     }
 
-    public function setContractId(?Contract $contractId): static
+    public function setContract(?Contract $contract): static
     {
-        $this->contractId = $contractId;
+        $this->contract = $contract;
 
         return $this;
     }
@@ -84,26 +104,26 @@ class Receipt
         return $this;
     }
 
-    public function getStartApplication(): ?\DateTimeInterface
+    public function getStartApplyAt(): ?\DateTimeInterface
     {
-        return $this->startApplication;
+        return $this->startApplyAt;
     }
 
-    public function setStartApplication(\DateTimeInterface $startApplication): static
+    public function setStartApplyAt(\DateTimeInterface $startApplyAt): static
     {
-        $this->startApplication = $startApplication;
+        $this->startApplyAt = $startApplyAt;
 
         return $this;
     }
 
-    public function getEndApplication(): ?\DateTimeInterface
+    public function getEndApplyAt(): ?\DateTimeInterface
     {
-        return $this->endApplication;
+        return $this->endApplyAt;
     }
 
-    public function setEndApplication(\DateTimeInterface $endApplication): static
+    public function setEndApplyAt(\DateTimeInterface $endApplyAt): static
     {
-        $this->endApplication = $endApplication;
+        $this->endApplyAt = $endApplyAt;
 
         return $this;
     }
@@ -192,7 +212,7 @@ class Receipt
     {
         if (!$this->transactions->contains($transaction)) {
             $this->transactions->add($transaction);
-            $transaction->setReceiptId($this);
+            $transaction->setReceipt($this);
         }
 
         return $this;
@@ -202,8 +222,8 @@ class Receipt
     {
         if ($this->transactions->removeElement($transaction)) {
             // set the owning side to null (unless already changed)
-            if ($transaction->getReceiptId() === $this) {
-                $transaction->setReceiptId(null);
+            if ($transaction->getReceipt() === $this) {
+                $transaction->setReceipt(null);
             }
         }
 
