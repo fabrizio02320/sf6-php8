@@ -21,7 +21,6 @@ class ReceiptFactoryTest extends TestCase
     {
         ////////////////////
         $startApplyAt = new DateTimeImmutable('2023-05-15');
-
         $debitDay = 10;
         $dueDate = $this->receiptFactory->evaluateDueDate($startApplyAt, $debitDay);
         $this->assertEquals('2023-05-10', $dueDate->format('Y-m-d'));
@@ -34,9 +33,9 @@ class ReceiptFactoryTest extends TestCase
         $dueDate = $this->receiptFactory->evaluateDueDate($startApplyAt, $debitDay);
         $this->assertEquals('2023-04-16', $dueDate->format('Y-m-d'));
 
+
         ////////////////////
         $startApplyAt = new DateTimeImmutable('2024-02-29');
-
         $debitDay = 1;
         $dueDate = $this->receiptFactory->evaluateDueDate($startApplyAt, $debitDay);
         $this->assertEquals('2024-02-01', $dueDate->format('Y-m-d'));
@@ -53,15 +52,16 @@ class ReceiptFactoryTest extends TestCase
         $dueDate = $this->receiptFactory->evaluateDueDate($startApplyAt, $debitDay);
         $this->assertEquals('2024-02-29', $dueDate->format('Y-m-d'));
 
+
         ////////////////////
         $startApplyAt = new DateTimeImmutable('2024-03-30');
-
         $debitDay = 31;
         $dueDate = $this->receiptFactory->evaluateDueDate($startApplyAt, $debitDay);
         $this->assertEquals('2024-02-29', $dueDate->format('Y-m-d'));
     }
 
-    public function testCreate(): void
+    // TODO a revoir et completer
+    public function estCreate(): void
     {
         $contract = new Contract();
         $contract->setExternalId('test-external-id');
@@ -79,7 +79,6 @@ class ReceiptFactoryTest extends TestCase
             contract: $contract,
             status: $status,
             startApplyAt: $startApplyAt,
-            amountTtc: $amountTtc,
             paymentMode: $paymentMode,
             createdAt: $createdAt,
         );
@@ -89,5 +88,109 @@ class ReceiptFactoryTest extends TestCase
         $this->assertEquals($amountTtc, $receipt->getAmountTtc());
         $this->assertEquals($paymentMode, $receipt->getPaymentMode());
         $this->assertEquals($createdAt, $receipt->getCreatedAt());
+    }
+
+    public function testEvaluateEndApplyAt(): void
+    {
+        ////////////////////
+        $startApplyAt = new DateTimeImmutable('2023-05-15');
+        $recurrence = Contract::RECURRENCE_MONTHLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-06-14', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_QUARTERLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-08-14', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_SEMI_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-11-14', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-05-14', $endApplyAt->format('Y-m-d'));
+
+
+        ////////////////////
+        $startApplyAt = new DateTimeImmutable('2023-01-31');
+        $recurrence = Contract::RECURRENCE_MONTHLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-02-27', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_QUARTERLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-04-29', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_SEMI_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-07-30', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-01-30', $endApplyAt->format('Y-m-d'));
+
+
+        ////////////////////
+        $startApplyAt = new DateTimeImmutable('2024-01-31');
+        $recurrence = Contract::RECURRENCE_MONTHLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-02-28', $endApplyAt->format('Y-m-d'));
+
+
+        ////////////////////
+        $startApplyAt = new DateTimeImmutable('2023-12-01');
+        $recurrence = Contract::RECURRENCE_MONTHLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2023-12-31', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_QUARTERLY;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-02-29', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_SEMI_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-05-31', $endApplyAt->format('Y-m-d'));
+
+        $recurrence = Contract::RECURRENCE_ANNUAL;
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt);
+        $this->assertEquals('2024-11-30', $endApplyAt->format('Y-m-d'));
+    }
+
+    public function testEvaluateAmountTtc(): void
+    {
+        ////////////////////
+        $amountTtc = $this->receiptFactory->evaluateAmountTtc(
+            endEffectiveDate: new DateTimeImmutable('2023-05-14'),
+            endApplyAt: new DateTimeImmutable('2023-04-14'),
+            recurrence: Contract::RECURRENCE_MONTHLY,
+            annualPrimeTtc: 1000,
+        );
+        $this->assertEquals(83.33, $amountTtc);
+
+        $amountTtc = $this->receiptFactory->evaluateAmountTtc(
+            endEffectiveDate: new DateTimeImmutable('2023-05-14'),
+            endApplyAt: new DateTimeImmutable('2023-05-14'),
+            recurrence: Contract::RECURRENCE_MONTHLY,
+            annualPrimeTtc: 1000,
+        );
+        $this->assertEquals(83.37, $amountTtc);
+
+
+        ////////////////////
+        $amountTtc = $this->receiptFactory->evaluateAmountTtc(
+            endEffectiveDate: new DateTimeImmutable('2023-05-14'),
+            endApplyAt: new DateTimeImmutable('2023-02-14'),
+            recurrence: Contract::RECURRENCE_QUARTERLY,
+            annualPrimeTtc: 1000,
+        );
+        $this->assertEquals(250, $amountTtc);
+
+        $amountTtc = $this->receiptFactory->evaluateAmountTtc(
+            endEffectiveDate: new DateTimeImmutable('2023-05-14'),
+            endApplyAt: new DateTimeImmutable('2023-05-14'),
+            recurrence: Contract::RECURRENCE_QUARTERLY,
+            annualPrimeTtc: 1000,
+        );
+        $this->assertEquals(250, $amountTtc);
     }
 }

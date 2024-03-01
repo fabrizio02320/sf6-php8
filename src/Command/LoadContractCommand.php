@@ -95,7 +95,6 @@ EOS
 
                 $receipt = $this->receiptFactory->createFirst(
                     contract: $contract,
-                    amountTtc: $annualPrimeTtc,
                 );
 
                 // wait a bit to have different created_at and external_id
@@ -123,7 +122,7 @@ EOS
         }
 
         $io->progressFinish();
-        $io->success('Contracts loaded');
+        $io->success('Contracts loaded with its receipts');
         if ($dryRunMode) {
             $io->warning('Dry run mode, no contract persisted');
         }

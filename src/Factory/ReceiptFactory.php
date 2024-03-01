@@ -15,18 +15,10 @@ class ReceiptFactory
         Contract           $contract,
         string             $status,
         DateTimeInterface  $startApplyAt,
-        float              $amountTtc,
         ?string            $paymentMode = null,
         ?DateTimeImmutable $createdAt = null,
     ): Receipt
     {
-//        $debitMode = $contract->getDebitMode();
-//        if (Contract::DEBIT_MODE_NOTHING === $debitMode) {
-//            $paymentMode = Receipt::PAYMENT_MODE_NULL;
-//        } else {
-//            $paymentMode = $debitMode;
-//        }
-
         $paymentMode = $this->evaluatePaymentMode($contract, $paymentMode);
 
         if (false === in_array($status, Receipt::ALL_STATUS, true)) {
@@ -38,17 +30,14 @@ class ReceiptFactory
         }
 
         $externalId = sprintf('%s-%s', $contract->getExternalId(), $startApplyAt->format('Ym'));
-
-        $recurrence = match ($contract->getRecurrence()) {
-            Contract::RECURRENCE_QUARTERLY => '+3 month',
-            Contract::RECURRENCE_SEMI_ANNUAL => '+6 month',
-            Contract::RECURRENCE_ANNUAL => '+1 year',
-            default => '+1 month',
-        };
-        $recurrence = sprintf('%s -1 day', $recurrence);
-        $endApplyAt = (clone $startApplyAt)->modify($recurrence);
-
+        $endApplyAt = $this->evaluateEndApplyAt($contract->getRecurrence(), $startApplyAt);
         $dueDate = $this->evaluateDueDate($startApplyAt, $contract->getDebitDay());
+        $amountTtc = $this->evaluateAmountTtc(
+            $contract->getEndEffectiveDate(),
+            $endApplyAt,
+            $contract->getRecurrence(),
+            $contract->getAnnualPrimeTtc(),
+        );
 
         $receipt = new Receipt();
         $receipt
@@ -68,7 +57,6 @@ class ReceiptFactory
 
     public function createFirst(
         Contract           $contract,
-        float              $amountTtc,
         ?DateTimeImmutable $createdAt = null,
     ): Receipt
     {
@@ -80,7 +68,6 @@ class ReceiptFactory
             contract: $contract,
             status: $status,
             startApplyAt: $startApplyAt,
-            amountTtc: $amountTtc,
             paymentMode: $paymentMode,
             createdAt: $createdAt,
         );
@@ -112,6 +99,83 @@ class ReceiptFactory
         }
 
         return new DateTime(sprintf('%d-%d-%d', $dueDateYear, $dueDateMonth, $debitDay));
+    }
+
+    public function evaluateEndApplyAt(string $recurrence, DateTimeInterface $startApplyAt): DateTimeInterface
+    {
+        $startApplyDay = (int)$startApplyAt->format('j');
+        $endApplyMonth = (int)$startApplyAt->format('n');
+        $endApplyYear = (int)$startApplyAt->format('Y');
+
+        $nbMonth = match ($recurrence) {
+            Contract::RECURRENCE_QUARTERLY => 3,
+            Contract::RECURRENCE_SEMI_ANNUAL => 6,
+            Contract::RECURRENCE_ANNUAL => 12,
+            default => 1,
+        };
+
+        if ($startApplyDay === 1) {
+            $nbMonth--;
+        }
+
+        if ($endApplyMonth + $nbMonth > 12) {
+            $endApplyYear++;
+            $endApplyMonth = ($endApplyMonth + $nbMonth) - 12;
+        } else {
+            $endApplyMonth += $nbMonth;
+        }
+
+        $endApplyAt = new DateTime(sprintf('%d-%d-%d', $endApplyYear, $endApplyMonth, 1));
+        $lastDayOfMonth = (int)$endApplyAt->format('t');
+
+        $endApplyDay = $startApplyDay - 1;
+        // if startApplyDay is the last day of the month, endApplyDay must be the last day of the month - 1 day
+        if ($startApplyDay === (int)$startApplyAt->format('t')) {
+            $endApplyDay = $lastDayOfMonth - 1;
+        }
+
+        // if startApplyDay is the first day of the month, endApplyDay must be the last day of the month
+        if ($startApplyDay === 1) {
+            $endApplyDay = $lastDayOfMonth;
+        }
+
+        // if endApplyDay is estimated to be the last day of the month and startApplyDay
+        // is not the first day of the month, we decrement it by 1
+        if ($endApplyDay === $lastDayOfMonth && $startApplyDay !== 1) {
+            $endApplyDay--;
+        }
+
+        return new DateTime(sprintf('%d-%d-%d', $endApplyYear, $endApplyMonth, $endApplyDay));
+    }
+
+    public function evaluateAmountTtc(
+        DateTimeInterface $endEffectiveDate,
+        DateTimeInterface $endApplyAt,
+        string $recurrence,
+        float $annualPrimeTtc,
+    ): float
+    {
+        if ($endApplyAt > $endEffectiveDate) {
+            throw new Exception('endApplyAt must be lower or equal to endEffectiveDate');
+        }
+
+        $divisor = match ($recurrence) {
+            Contract::RECURRENCE_QUARTERLY => 4,
+            Contract::RECURRENCE_SEMI_ANNUAL => 2,
+            Contract::RECURRENCE_ANNUAL => 1,
+            default => 12,
+        };
+
+        // determine the monthly ttc amount
+        $amountTtc = (int)($annualPrimeTtc * 100);
+        $amountTtc = floor($amountTtc / $divisor) / 100;
+
+        // for the last receipt, we need to adjust the amountTtc
+        if ($endEffectiveDate->format('Y-m-d') === $endApplyAt->format('Y-m-d')) {
+            $amountTtc = $annualPrimeTtc - ($amountTtc * ($divisor - 1));
+        }
+
+        return $amountTtc;
     }
 
     private function evaluatePaymentMode(Contract $contract, ?string $paymentModeRequested = null): ?string
