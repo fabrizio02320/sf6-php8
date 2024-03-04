@@ -3,9 +3,12 @@
 namespace App\Command;
 
 use App\Entity\Contract;
+use App\Factory\TransactionFactory;
 use App\Service\ContractService;
+use App\Service\ReceiptService;
 use DateTime;
 use DateTimeImmutable;
+use Doctrine\ORM\EntityManagerInterface;
 use Exception;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -27,8 +30,12 @@ class LaunchDebitCommand extends Command
     /**
      * @param SymfonyStyle $io
      */
-    public function __construct(private ContractService $contractService)
-    {
+    public function __construct(
+        private ContractService $contractService,
+        private ReceiptService $receiptService,
+        private TransactionFactory $transactionFactory,
+        private EntityManagerInterface $em,
+    ) {
         parent::__construct();
     }
 
@@ -63,12 +70,6 @@ EOS
                 'Date of the debit',
                 (new DateTime())->format('Y-m-d')
             )
-            ->addOption(
-                'ref',
-                null,
-                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
-                'List of external ids'
-            )
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Dry run mode (no persist)')
         ;
     }
@@ -78,6 +79,7 @@ EOS
         $this->io->title('Launch debit command');
 
         $inputDebitDate = $input->getArgument('debit-date');
+        $dryRunMode = $input->getOption('dry-run');
         $debitDate = $this->isCorrectDate($inputDebitDate) ? new DateTimeImmutable($inputDebitDate) : null;
 
         if (null === $debitDate) {
@@ -85,17 +87,24 @@ EOS
             return Command::INVALID;
         }
 
+
         $contracts = $this->contractService->findContractsToBilling($debitDate);
         $nbContract = count($contracts);
-        // get le nombre de quittance qui sera générée
-        // get le nombre de relance qui sera envoyée
-        // recap nb de contract impacté ? (+ nb de quittance a créér + nb transaction a realiser)
+
+        if ($nbContract === 0) {
+            $this->io->warning('No contract to collect');
+            return Command::SUCCESS;
+        }
 
         $this->io->info(sprintf(
             'Found %d contracts to collect',
             $nbContract
         ));
-        $this->io->section(sprintf('Contracts impacted (external_id with id) by the debit on %s', $debitDate->format('Y-m-d')));
+
+        $this->io->section(sprintf(
+            'Contracts impacted (external_id with id) by the debit on %s',
+            $debitDate->format('Y-m-d'))
+        );
         foreach ($contracts as $contract) {
             $this->io->writeln(sprintf(' - %s (%s)', $contract->getExternalId(), $contract->getId()));
         }
@@ -107,24 +116,54 @@ EOS
             return Command::INVALID;
         }
 
-        // boucle sur les contrat impacté
-        foreach ($contracts as $contract) {
-            $receiptDate = $debitDate;
-            if (Contract::DEBIT_MODE_NOTHING === $contract->getDebitMode()) {
-                $receiptDate = $receiptDate->modify('+30 days');
+        try {
+            gc_disable();
+            $i = 0;
+            $this->io->progressStart($nbContract);
+            foreach ($contracts as $contract) {
+                $i++;
+                $receipt = $this->receiptService->getOrCreateReceipt($contract, $debitDate);
+
+                if (Contract::DEBIT_MODE_NOTHING !== $contract->getDebitMode()) {
+                    $transaction = $this->transactionFactory->create($receipt, $debitDate);
+                    if (!$dryRunMode) {
+                        $this->em->persist($transaction);
+                    }
+
+                    
+                }
+
+                if (!$dryRunMode) {
+                    $this->em->persist($contract);
+                    $this->em->persist($receipt);
+
+                    if ($i % self::BATCH_SIZE === 0) {
+                        $this->em->flush();
+                        $this->em->clear();
+                        gc_collect_cycles();
+                    }
+                }
+                $this->io->progressAdvance();
             }
 
-            $receipt = $contract->getReceiptOnDate($receiptDate);
+            if (!$dryRunMode) {
+                $this->em->flush();
+                $this->em->clear();
+            }
+        } catch (Exception $e) {
+            $this->io->error($contract->getId() . ' - ' . $e->getMessage());
+            return Command::FAILURE;
         }
-            // create quittance si pas deja existante, sinon get it
-            // create transaction avec statut create sur la quittance, si mode de paiement du contrat != aucun
             // result = mock du paiement avec réponse aléatoire
             // en fonction du result, maj contract + quittance + transaction
 
-        // END BOUCLE
-
         // Display recapitulatif des resultats de prélèvement par contract
 
+        $this->io->progressFinish();
+        $this->io->success('Contracts loaded with its receipt and transaction');
+        if ($dryRunMode) {
+            $this->io->warning('Dry run mode, no contract persisted');
+        }
         return Command::SUCCESS;
     }
 

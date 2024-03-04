@@ -2,8 +2,10 @@
 
 namespace App\Tests\Service;
 
+use App\Factory\ReceiptFactory;
 use App\Repository\ContractRepository;
 use App\Service\ContractService;
+use App\Service\ReceiptService;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -16,7 +18,13 @@ class ContractServiceTest extends TestCase
 
     protected function setUp(): void
     {
-        $this->contractService = new ContractService($this->prophesize(ContractRepository::class)->reveal());
+        $receiptFactory = new ReceiptFactory();
+        $receiptService = new ReceiptService($receiptFactory);
+
+        $this->contractService = new ContractService(
+            $this->prophesize(ContractRepository::class)->reveal(),
+            $receiptService
+        );
     }
 
     public function testGetDebitDayConcerned(): void

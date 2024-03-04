@@ -11,6 +11,11 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity(repositoryClass: TransactionRepository::class)]
 class Transaction
 {
+    const STATUS_CREATED = 'created';
+    const STATUS_DONE = 'done';
+    const STATUS_IN_PAYMENT = 'in_payment';
+    const STATUS_FAILED = 'failed';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]

@@ -9,7 +9,10 @@ use Exception;
 
 class  ContractService
 {
-    public function __construct(private ContractRepository $contractRepository) {}
+    public function __construct(
+        private ContractRepository $contractRepository,
+        private ReceiptService $receiptService,
+    ) {}
 
     /**
      * @param DateTimeImmutable $debitDate
@@ -26,6 +29,21 @@ class  ContractService
             [Contract::DEBIT_MODE_CB, Contract::DEBIT_MODE_SEPA],
         );
 
+        // evaluate if the contract can be debited at the date
+        $contracts = array_filter($contracts, function (Contract $contract) use ($debitDate) {
+            $startApplyAt = $this->receiptService->evaluateStartApplyAt(
+                $contract->getEffectiveDate(),
+                $contract->getRecurrence(),
+                $debitDate
+            );
+
+            if (null === $startApplyAt) {
+                return false;
+            }
+
+            return true;
+        });
+
         // find about nothing mode
         $debitDateWithNothing = $debitDate->modify('+30 days');
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDateWithNothing);
@@ -34,8 +52,22 @@ class  ContractService
             $debitDaysConcerned,
             [Contract::DEBIT_MODE_NOTHING],
         );
+        $contractsWithNothing = array_filter(
+            $contractsWithNothing, function (Contract $contract) use ($debitDateWithNothing)
+            {
+                $startApplyAt = $this->receiptService->evaluateStartApplyAt(
+                    $contract->getEffectiveDate(),
+                    $contract->getRecurrence(),
+                    $debitDateWithNothing
+                );
 
-        // gestion des relances a voir plus tard
+                if (null === $startApplyAt) {
+                    return false;
+                }
+
+                return true;
+            }
+        );
 
         return array_merge($contracts, $contractsWithNothing);
     }

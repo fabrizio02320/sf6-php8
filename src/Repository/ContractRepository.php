@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Contract;
+use App\Entity\Receipt;
 use DateTime;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr;
@@ -31,7 +32,8 @@ class ContractRepository extends ServiceEntityRepository
                 'c.receipts',
                 'r',
                 Expr\Join::WITH,
-                'r.startApplyAt <= :debitDate AND r.endApplyAt >= :debitDate'
+                '(r.startApplyAt <= :debitDate AND r.endApplyAt >= :debitDate AND r.status IN (:receiptStatus))
+                '
             )
             ->where('c.status = :status')
             ->andWhere('c.effectiveDate <= :debitDate')
@@ -42,6 +44,7 @@ class ContractRepository extends ServiceEntityRepository
             ->groupBy('c.id')
             ->having('COUNT(r.id) = 0')
             ->setParameter('status', Contract::STATUS_IN_PROGRESS)
+            ->setParameter('receiptStatus', [Receipt::STATUS_PAID, Receipt::STATUS_IN_PAYMENT])
             ->setParameter('debitDate', $debitDate)
             ->setParameter('debitModes', $debitModes)
             ->setParameter('debitDays', $debitDays)

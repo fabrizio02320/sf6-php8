@@ -30,7 +30,11 @@ class ReceiptFactory
         }
 
         $externalId = sprintf('%s-%s', $contract->getExternalId(), $startApplyAt->format('Ym'));
-        $endApplyAt = $this->evaluateEndApplyAt($contract->getRecurrence(), $startApplyAt);
+        $endApplyAt = $this->evaluateEndApplyAt(
+            $contract->getRecurrence(),
+            $startApplyAt,
+            $contract->getEffectiveDate()
+        );
         $dueDate = $this->evaluateDueDate($startApplyAt, $contract->getDebitDay());
         $amountTtc = $this->evaluateAmountTtc(
             $contract->getEndEffectiveDate(),
@@ -101,16 +105,21 @@ class ReceiptFactory
         return new DateTime(sprintf('%d-%d-%d', $dueDateYear, $dueDateMonth, $debitDay));
     }
 
-    public function evaluateEndApplyAt(string $recurrence, DateTimeInterface $startApplyAt): DateTimeInterface
+    public function evaluateEndApplyAt(
+        string $recurrence,
+        DateTimeInterface $startApplyAt,
+        DateTimeInterface $effectiveDate
+    ): DateTimeInterface
     {
+        $effectiveDay = (int)$effectiveDate->format('j');
         $startApplyDay = (int)$startApplyAt->format('j');
         $endApplyMonth = (int)$startApplyAt->format('n');
         $endApplyYear = (int)$startApplyAt->format('Y');
 
         $nbMonth = match ($recurrence) {
             Contract::RECURRENCE_QUARTERLY => 3,
-            Contract::RECURRENCE_SEMI_ANNUAL => 6,
-            Contract::RECURRENCE_ANNUAL => 12,
+            Contract::RECURRENCE_SEMI_ANNUALly => 6,
+            Contract::RECURRENCE_ANNUALLY => 12,
             default => 1,
         };
 
@@ -128,14 +137,18 @@ class ReceiptFactory
         $endApplyAt = new DateTime(sprintf('%d-%d-%d', $endApplyYear, $endApplyMonth, 1));
         $lastDayOfMonth = (int)$endApplyAt->format('t');
 
-        $endApplyDay = $startApplyDay - 1;
-        // if startApplyDay is the last day of the month, endApplyDay must be the last day of the month - 1 day
-        if ($startApplyDay === (int)$startApplyAt->format('t')) {
+//        $endApplyDay = $startApplyDay - 1;
+        $endApplyDay = $effectiveDay - 1;
+        // if startApplyDay is the last day of the month and $effectiveDate->format('t') is the last day of the month,
+        // endApplyDay must be the last day of the month - 1 day
+        if ($startApplyDay === (int)$startApplyAt->format('t')
+            && (int)$effectiveDate->format('j') === (int)$effectiveDate->format('t')
+        ) {
             $endApplyDay = $lastDayOfMonth - 1;
         }
 
         // if startApplyDay is the first day of the month, endApplyDay must be the last day of the month
-        if ($startApplyDay === 1) {
+        if ($startApplyDay === 1 && (int)$effectiveDate->format('j') === 1) {
             $endApplyDay = $lastDayOfMonth;
         }
 
@@ -161,8 +174,8 @@ class ReceiptFactory
 
         $divisor = match ($recurrence) {
             Contract::RECURRENCE_QUARTERLY => 4,
-            Contract::RECURRENCE_SEMI_ANNUAL => 2,
-            Contract::RECURRENCE_ANNUAL => 1,
+            Contract::RECURRENCE_SEMI_ANNUALly => 2,
+            Contract::RECURRENCE_ANNUALLY => 1,
             default => 12,
         };
 

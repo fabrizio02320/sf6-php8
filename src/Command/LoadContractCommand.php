@@ -100,7 +100,6 @@ EOS
                 // wait a bit to have different created_at and external_id
                 usleep(10000);
 
-                $io->progressAdvance();
                 if (!$dryRunMode) {
                     $this->em->persist($contract);
                     $this->em->persist($receipt);
@@ -111,6 +110,7 @@ EOS
                         gc_collect_cycles();
                     }
                 }
+                $io->progressAdvance();
             }
 
             if (!$dryRunMode) {

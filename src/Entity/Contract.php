@@ -35,13 +35,13 @@ class Contract
 
     const RECURRENCE_MONTHLY = 'monthly';
     const RECURRENCE_QUARTERLY = 'quarterly';
-    const RECURRENCE_SEMI_ANNUAL = 'semi-annual';
-    const RECURRENCE_ANNUAL = 'annual';
+    const RECURRENCE_SEMI_ANNUALly = 'semi-annually';
+    const RECURRENCE_ANNUALLY = 'annually';
     const ALL_RECURRENCE = [
         self::RECURRENCE_MONTHLY,
         self::RECURRENCE_QUARTERLY,
-        self::RECURRENCE_SEMI_ANNUAL,
-        self::RECURRENCE_ANNUAL,
+        self::RECURRENCE_SEMI_ANNUALly,
+        self::RECURRENCE_ANNUALLY,
     ];
 
     #[ORM\Id]
@@ -215,7 +215,7 @@ class Contract
     public function getReceiptOnDate(DateTimeInterface $date): ?Receipt
     {
         $receipts = $this->receipts->filter(function (Receipt $receipt) use ($date) {
-            return $receipt->getStartApplyAt() <= $date && $receipt->getEndApplyAt() >= $date;
+            return $date->diff($receipt->getStartApplyAt())->m === 0;
         });
 
         return $receipts->first() ?: null;
