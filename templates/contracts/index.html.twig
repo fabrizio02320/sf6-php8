@@ -44,7 +44,6 @@
         {% for contract in contracts %}
             <tr>
                 <td><a href="{{ path('contract_show', {'id': contract.id}) }}">{{ contract.id }}</a></td>
-{#                <td>{{ contract.id }}</td>#}
                 <td>{{ contract.externalId }}</td>
                 <td>{{ contract.status }}</td>
                 <td>{{ contract.debitDay }}</td>

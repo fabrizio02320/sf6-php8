@@ -24,4 +24,20 @@ class ContractController extends AbstractController
             'contracts' => $contracts,
         ]);
     }
+
+    /**
+     * @Route("/contract/{id}", name="contract_show")
+     */
+    public function show(int $id, ContractRepository $contractRepository)
+    {
+        $contract = $contractRepository->findById($id);
+
+        if (!$contract) {
+            throw $this->createNotFoundException('The contract does not exist');
+        }
+
+        return $this->render('contracts/show.html.twig', [
+            'contract' => $contract,
+        ]);
+    }
 }

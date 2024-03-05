@@ -67,7 +67,7 @@ class Receipt
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'receiptId', targetEntity: Transaction::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'receipt', targetEntity: Transaction::class, orphanRemoval: true)]
     private Collection $transactions;
 
     public function __construct()

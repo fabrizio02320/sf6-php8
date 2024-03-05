@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Détails du contrat</h1>
+    <a href="{{ path('contracts') }}" class="btn btn-primary">Retour à la liste des contrats</a>
+
+    <table class="my-table">
+        <caption>Détail du contrat {{ contract.externalId }} (id: {{ contract.id }})</caption>
+        <thead>
+        <tr>
+            <th>Statut</th>
+            <th>Montant annuel</th>
+            <th>Date d'effet</th>
+            <th>Jour de prélèvement</th>
+            <th>Mode de prélèvement</th>
+            <th>Récurrence</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{{ contract.status }}</td>
+            <td>{{ contract.annualPrimeTtc }}</td>
+            <td>{{ contract.effectiveDate|date('Y-m-d') }} au {{ contract.endEffectiveDate|date('Y-m-d') }}</td>
+            <td>{{ contract.debitDay }}</td>
+            <td>{{ contract.debitMode }}</td>
+            <td>{{ contract.recurrence }}</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table class="my-table">
+        <caption>Listing des quittances ({{ contract.receipts|length }})</caption>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>External ID</th>
+            <th>Statut</th>
+            <th>Période</th>
+            <th>Date de prélèvement</th>
+            <th>Mode de paiement</th>
+            <th>Montant</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for receipt in contract.receipts %}
+            <tr>
+                <td>{{ receipt.id }}</td>
+                <td>{{ receipt.externalId }}</td>
+                <td>{{ receipt.status }}</td>
+                <td>{{ receipt.startApplyAt|date('Y-m-d') }} au {{ receipt.endApplyAt|date('Y-m-d') }}</td>
+                <td>{{ receipt.dueDate|date('Y-m-d') }}</td>
+                <td>{{ receipt.paymentMode }}</td>
+                <td>{{ receipt.amountTtc }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

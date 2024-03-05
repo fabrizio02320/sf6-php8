@@ -91,6 +91,19 @@ class ContractRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function findById(int $id): ?Contract
+    {
+        return $this->createQueryBuilder('c')
+            ->leftJoin('c.receipts', 'r')
+            ->addSelect('r')
+            ->leftJoin('r.transactions', 't')
+            ->addSelect('t')
+            ->where('c.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function clear(): void
     {
         $this->_em->clear();
