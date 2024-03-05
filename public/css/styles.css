@@ -1,0 +1,27 @@
+.my-table {
+    margin: 0 auto;
+    margin-top: 50px;
+    border: 1px solid black;
+    width: 80%;
+}
+
+.my-form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.my-form div {
+    flex: 1;
+    margin: 0 10px;
+    max-width: 200px;
+}
+
+.my-form div input {
+    order: 2;
+}
+
+.my-table td, .my-table th {
+    text-align: center;
+    border-bottom: #196f92 1px solid;
+}

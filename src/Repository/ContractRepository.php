@@ -69,6 +69,28 @@ class ContractRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function findByFiltersAndSort(array $filters, array $sort, ?int $limit = null): array
+    {
+        $qb = $this->createQueryBuilder('c');
+
+        foreach ($filters as $field => $value) {
+            if (null !== $value && '' !== $value) {
+                $qb->andWhere('c.' . $field . ' = :' . $field)
+                    ->setParameter($field, $value);
+            }
+        }
+
+        foreach ($sort as $field => $order) {
+            $qb->addOrderBy('c.' . $field, $order);
+        }
+
+        if (null !== $limit) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function clear(): void
     {
         $this->_em->clear();

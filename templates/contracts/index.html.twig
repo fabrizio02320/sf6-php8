@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <form method="get" class="my-form">
+        <div>
+            <label for="id">ID</label>
+            <input type="text" id="id" name="filters[id]" placeholder="ID">
+        </div>
+        <div>
+            <label for="external_id">External ID</label>
+            <input type="text" id="external_id" name="filters[externalId]" placeholder="External ID">
+        </div>
+        <div>
+            <label for="status">Statut</label>
+            <input type="text" id="status" name="filters[status]" placeholder="Statut">
+        </div>
+        <div>
+            <label for="debit_day">Jour de prélèvement</label>
+            <input type="text" id="debit_day" name="filters[debitDay]" placeholder="Debit day">
+        </div>
+        <div>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+
+    <table class="my-table">
+        <caption>Listing des contrats ({{ contracts|length }})</caption>
+        <thead>
+        <tr>
+{#            <th><a href="{{ path('contracts', {sort: {'status': 'ASC'}}) }}">Status</a></th>#}
+{#            <th><a href="{{ path('contracts', {sort: {'effective_date': 'ASC'}}) }}">Effective Date</a></th>#}
+            <th>ID</th>
+            <th>External ID</th>
+            <th>Statut</th>
+            <th>Jour de prélèvement</th>
+            <th>Date d'effet</th>
+            <th>Date de fin d'effet</th>
+            <th>Montant Annuel</th>
+            <th>Mode de prélèvement</th>
+            <th>Récurrence</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for contract in contracts %}
+            <tr>
+                <td><a href="{{ path('contract_show', {'id': contract.id}) }}">{{ contract.id }}</a></td>
+{#                <td>{{ contract.id }}</td>#}
+                <td>{{ contract.externalId }}</td>
+                <td>{{ contract.status }}</td>
+                <td>{{ contract.debitDay }}</td>
+                <td>{{ contract.effectiveDate|date('Y-m-d') }}</td>
+                <td>{{ contract.endEffectiveDate|date('Y-m-d') }}</td>
+                <td>{{ contract.annualPrimeTtc }}</td>
+                <td>{{ contract.debitMode }}</td>
+                <td>{{ contract.recurrence }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
