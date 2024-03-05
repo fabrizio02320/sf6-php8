@@ -3,8 +3,11 @@
 namespace App\Command;
 
 use App\Entity\Contract;
+use App\Entity\Receipt;
+use App\Entity\Transaction;
 use App\Factory\TransactionFactory;
 use App\Service\ContractService;
+use App\Service\MockDebitService;
 use App\Service\ReceiptService;
 use DateTime;
 use DateTimeImmutable;
@@ -33,6 +36,7 @@ class LaunchDebitCommand extends Command
     public function __construct(
         private ContractService $contractService,
         private ReceiptService $receiptService,
+        private MockDebitService $mockDebitService,
         private TransactionFactory $transactionFactory,
         private EntityManagerInterface $em,
     ) {
@@ -87,7 +91,7 @@ EOS
             return Command::INVALID;
         }
 
-
+        // TODO see to don't call the same contract twice
         $contracts = $this->contractService->findContractsToBilling($debitDate);
         $nbContract = count($contracts);
 
@@ -119,19 +123,24 @@ EOS
         try {
             gc_disable();
             $i = 0;
+            $tableHeader = ['Contract', 'Receipt', 'Transaction ID', 'Result'];
+            $tableRow = [];
             $this->io->progressStart($nbContract);
             foreach ($contracts as $contract) {
                 $i++;
                 $receipt = $this->receiptService->getOrCreateReceipt($contract, $debitDate);
 
+                $transaction = null;
                 if (Contract::DEBIT_MODE_NOTHING !== $contract->getDebitMode()) {
-                    $transaction = $this->transactionFactory->create($receipt, $debitDate);
+                    $transaction = $this->transactionFactory->create($receipt);
                     if (!$dryRunMode) {
                         $this->em->persist($transaction);
                     }
 
-                    
+                    $this->mockDebitService->debit($transaction);
                 }
+
+                $tableRow[] = $this->getTableRow($contract, $receipt, $transaction);
 
                 if (!$dryRunMode) {
                     $this->em->persist($contract);
@@ -150,14 +159,17 @@ EOS
                 $this->em->flush();
                 $this->em->clear();
             }
+
+            $this->io->writeln('');
+            $this->io->table($tableHeader, $tableRow);
+
+
         } catch (Exception $e) {
             $this->io->error($contract->getId() . ' - ' . $e->getMessage());
             return Command::FAILURE;
+        } finally {
+            gc_enable();
         }
-            // result = mock du paiement avec réponse aléatoire
-            // en fonction du result, maj contract + quittance + transaction
-
-        // Display recapitulatif des resultats de prélèvement par contract
 
         $this->io->progressFinish();
         $this->io->success('Contracts loaded with its receipt and transaction');
@@ -178,5 +190,37 @@ EOS
 
         // check if the convert date is the same that origin string date
         return $convertDate->format('Y-m-d') === $dateToCheck;
+    }
+
+    private function getTableRow(Contract $contract, Receipt $receipt, ?Transaction $transaction = null): array
+    {
+        $contractInfo = sprintf('%s (%s) - %s - %s :%s€',
+            $contract->getId(),
+            $contract->getRecurrence(),
+            $contract->getDebitMode(),
+            $contract->getStatus(),
+            $contract->getAnnualPrimeTtc(),
+        );
+        $receiptInfo = sprintf('%s - %s to %s - %s - %s€',
+            $receipt->getId(),
+            $receipt->getStartApplyAt()?->format('Y-m-d'),
+            $receipt->getEndApplyAt()?->format('Y-m-d'),
+            $receipt->getStatus(),
+            $receipt->getAmountTtc(),
+        );
+
+        $resultInfo = $transaction?->getStatus() ?? '';
+        if ($transaction?->getFailureReason()) {
+            $resultInfo = sprintf('%s - failureReason: %s',
+                $transaction->getStatus(),
+                $transaction->getFailureReason(),
+            );
+        }
+        return [
+            $contractInfo,
+            $receiptInfo,
+            $transaction?->getId() ?? '',
+            $resultInfo,
+        ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Tests\Service;
 use App\Entity\Contract;
 use App\Factory\ReceiptFactory;
 use App\Service\ReceiptService;
+use DateTime;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 use Prophecy\PhpUnit\ProphecyTrait;
@@ -25,7 +26,7 @@ class ReceiptServiceTest extends TestCase
     public function testEvaluateStartApplyAt()
     {
         ////////////////////
-        $effectiveDate = new \DateTime('2022-12-29');
+        $effectiveDate = new DateTime('2022-12-29');
         $recurrent = Contract::RECURRENCE_MONTHLY;
         $debitDate = new DateTimeImmutable('2023-03-05');
         $result = $this->receiptService->evaluateStartApplyAt($effectiveDate, $recurrent, $debitDate);
@@ -42,15 +43,23 @@ class ReceiptServiceTest extends TestCase
 
 
         ////////////////////
-        $effectiveDate = new \DateTime('2024-01-01');
+        $effectiveDate = new DateTime('2024-01-01');
         $recurrent = Contract::RECURRENCE_MONTHLY;
         $debitDate = new DateTimeImmutable('2024-03-05');
         $result = $this->receiptService->evaluateStartApplyAt($effectiveDate, $recurrent, $debitDate);
         $this->assertEquals('2024-04-01', $result->format('Y-m-d'));
 
-        $recurrent = Contract::RECURRENCE_SEMI_ANNUALly;
+        $recurrent = Contract::RECURRENCE_SEMI_ANNUALLY;
         $debitDate = new DateTimeImmutable('2024-03-05');
         $result = $this->receiptService->evaluateStartApplyAt($effectiveDate, $recurrent, $debitDate);
         $this->assertEquals('2024-07-01', $result->format('Y-m-d'));
+
+        ////////////////////
+        $result = $this->receiptService->evaluateStartApplyAt(
+            effectiveDate: new DateTime('2023-11-10'),
+            recurrence: Contract::RECURRENCE_QUARTERLY,
+            debitDate: new DateTimeImmutable('2024-03-25'),
+        );
+        $this->assertEquals('2024-05-10', $result->format('Y-m-d'));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Entity\Contract;
 use App\Repository\ContractRepository;
+use DateInterval;
 use DateTimeImmutable;
 use Exception;
 
@@ -22,11 +23,12 @@ class  ContractService
     public function findContractsToBilling(DateTimeImmutable $debitDate): array
     {
         // find about SEPA and CB mode
+        $debitDate = (clone $debitDate)->add(new DateInterval('P1M'));
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDate);
         $contracts = $this->contractRepository->findContractsToBilling(
-            $debitDate,
-            $debitDaysConcerned,
-            [Contract::DEBIT_MODE_CB, Contract::DEBIT_MODE_SEPA],
+            debitDate: $debitDate,
+            debitDays: $debitDaysConcerned,
+            debitModes: [Contract::DEBIT_MODE_CB, Contract::DEBIT_MODE_SEPA],
         );
 
         // evaluate if the contract can be debited at the date
@@ -37,7 +39,7 @@ class  ContractService
                 $debitDate
             );
 
-            if (null === $startApplyAt) {
+            if (null === $startApplyAt || $startApplyAt <= $debitDate->add(new DateInterval('P1M'))) {
                 return false;
             }
 
@@ -45,7 +47,7 @@ class  ContractService
         });
 
         // find about nothing mode
-        $debitDateWithNothing = $debitDate->modify('+30 days');
+        $debitDateWithNothing = $debitDate->add(new DateInterval('P1M'));
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDateWithNothing);
         $contractsWithNothing = $this->contractRepository->findContractsToBilling(
             $debitDateWithNothing,
@@ -61,7 +63,13 @@ class  ContractService
                     $debitDateWithNothing
                 );
 
-                if (null === $startApplyAt) {
+                if ($contract->getId() === 26123) {
+                    dump($startApplyAt);
+                    dd($debitDateWithNothing);
+//                    dd($debitDate);
+                }
+
+                if (null === $startApplyAt || $startApplyAt <= $debitDateWithNothing->add(new DateInterval('P1M'))) {
                     return false;
                 }
 

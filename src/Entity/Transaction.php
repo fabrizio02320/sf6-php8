@@ -16,6 +16,23 @@ class Transaction
     const STATUS_IN_PAYMENT = 'in_payment';
     const STATUS_FAILED = 'failed';
 
+    const REFUSAL_REASON_INSUFFICIENT_FUNDS = 'insufficient_funds';
+    const REFUSAL_REASON_CANCELED_MANDATE = 'canceled_mandate';
+    const REFUSAL_REASON_DEBTOR_DECEASED = 'debtor_deceased';
+    const REFUSAL_REASON_CB_OPPOSITION = 'cb_opposition';
+    const REFUSAL_REASON_OTHER = 'other';
+    const ALL_SEPA_REFUSAL_REASONS = [
+        self::REFUSAL_REASON_INSUFFICIENT_FUNDS,
+        self::REFUSAL_REASON_CANCELED_MANDATE,
+        self::REFUSAL_REASON_DEBTOR_DECEASED,
+        self::REFUSAL_REASON_OTHER,
+    ];
+    const ALL_CB_REFUSAL_REASONS = [
+        self::REFUSAL_REASON_INSUFFICIENT_FUNDS,
+        self::REFUSAL_REASON_CB_OPPOSITION,
+        self::REFUSAL_REASON_OTHER,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -23,13 +40,13 @@ class Transaction
 
     #[ORM\ManyToOne(inversedBy: 'transactions')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Receipt $receipt = null;
+    private Receipt $receipt;
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private DateTimeInterface $transactionDate;
 
-    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private DateTimeInterface $paidAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?DateTimeInterface $paidAt = null;
 
     #[ORM\Column]
     private ?float $amount;
@@ -54,12 +71,12 @@ class Transaction
         return $this->id;
     }
 
-    public function getReceipt(): ?Receipt
+    public function getReceipt(): Receipt
     {
         return $this->receipt;
     }
 
-    public function setReceipt(?Receipt $receipt): static
+    public function setReceipt(Receipt $receipt): static
     {
         $this->receipt = $receipt;
 

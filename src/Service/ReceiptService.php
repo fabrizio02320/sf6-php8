@@ -17,11 +17,12 @@ class ReceiptService
 
     public function getOrCreateReceipt(Contract $contract, DateTimeImmutable $debitDate)
     {
+        if (Contract::DEBIT_MODE_NOTHING === $contract->getDebitMode()) {
+            $debitDate = (clone $debitDate)->add(new DateInterval('P1M'));
+        }
+
         $receipt = $contract->getReceiptOnDate($debitDate);
         if ($receipt) {
-            if ($contract->getId() === 5828) {
-                dd($receipt->getStartApplyAt()->format('Y-m-d'));
-            }
             return $receipt;
         }
 
@@ -30,6 +31,10 @@ class ReceiptService
             $contract->getRecurrence(),
             $debitDate
         );
+
+        if (!$startApplyAt) {
+            throw new Exception('No startApplyAt found');
+        }
 
         return $this->receiptFactory->create(
             contract: $contract,
@@ -66,19 +71,20 @@ class ReceiptService
             return $nextApplyAt;
         }
 
+        $nbMonth = match ($recurrence) {
+            Contract::RECURRENCE_MONTHLY => 1,
+            Contract::RECURRENCE_QUARTERLY => 3,
+            Contract::RECURRENCE_SEMI_ANNUALLY => 6,
+            Contract::RECURRENCE_ANNUALLY => 12,
+        };
+
         if ($previousStartApplyAt < $debitDate
             && $endApplyAt > $debitDate
-            && $startApplyAt->diff($debitDate)->m === 0
+            && $startApplyAt->diff($debitDate)->m < $nbMonth
             && $startApplyAt->diff($effectiveDate)->m > 0
         ) {
             return $startApplyAt;
         }
-
-//        dump($effectiveDate);
-//        dump($recurrence);
-//        dump($debitDate);
-//        dump($startApplyAt->format('Y-m'));
-//        dd( $debitDate->modify('+1 month')->format('Y-m'));
 
         return null;
     }

@@ -38,7 +38,7 @@ class Receipt
 
     #[ORM\ManyToOne(inversedBy: 'receipts')]
     #[ORM\JoinColumn(nullable: false)]
-    private ?Contract $contract = null;
+    private Contract $contract;
 
     #[ORM\Column(length: 255)]
     private ?string $externalId = null;
@@ -55,7 +55,7 @@ class Receipt
     #[ORM\Column]
     private ?float $amountTtc = null;
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $paymentMode = null;
 
     #[ORM\Column(length: 255)]
@@ -80,12 +80,12 @@ class Receipt
         return $this->id;
     }
 
-    public function getContract(): ?Contract
+    public function getContract(): Contract
     {
         return $this->contract;
     }
 
-    public function setContract(?Contract $contract): static
+    public function setContract(Contract $contract): static
     {
         $this->contract = $contract;
 
@@ -157,7 +157,7 @@ class Receipt
         return $this->paymentMode;
     }
 
-    public function setPaymentMode(string $paymentMode): static
+    public function setPaymentMode(?string $paymentMode = null): static
     {
         $this->paymentMode = $paymentMode;
 

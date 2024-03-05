@@ -5,6 +5,7 @@ namespace App\Tests\Factory;
 use App\Entity\Contract;
 use App\Entity\Receipt;
 use App\Factory\ReceiptFactory;
+use DateTime;
 use DateTimeImmutable;
 use PHPUnit\Framework\TestCase;
 
@@ -103,7 +104,7 @@ class ReceiptFactoryTest extends TestCase
         $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
         $this->assertEquals('2023-08-14', $endApplyAt->format('Y-m-d'));
 
-        $recurrence = Contract::RECURRENCE_SEMI_ANNUALly;
+        $recurrence = Contract::RECURRENCE_SEMI_ANNUALLY;
         $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
         $this->assertEquals('2023-11-14', $endApplyAt->format('Y-m-d'));
 
@@ -123,7 +124,7 @@ class ReceiptFactoryTest extends TestCase
         $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
         $this->assertEquals('2023-04-29', $endApplyAt->format('Y-m-d'));
 
-        $recurrence = Contract::RECURRENCE_SEMI_ANNUALly;
+        $recurrence = Contract::RECURRENCE_SEMI_ANNUALLY;
         $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
         $this->assertEquals('2023-07-30', $endApplyAt->format('Y-m-d'));
 
@@ -149,23 +150,49 @@ class ReceiptFactoryTest extends TestCase
 
 
         ////////////////////
-        $effectiveDate = new DateTimeImmutable('2023-12-01');
-        $startApplyAt = new DateTimeImmutable('2023-12-01');
-        $recurrence = Contract::RECURRENCE_MONTHLY;
-        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            Contract::RECURRENCE_MONTHLY,
+            new DateTimeImmutable('2023-12-01'),
+            new DateTimeImmutable('2023-12-01')
+        );
         $this->assertEquals('2023-12-31', $endApplyAt->format('Y-m-d'));
 
-        $recurrence = Contract::RECURRENCE_QUARTERLY;
-        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            Contract::RECURRENCE_QUARTERLY,
+            new DateTimeImmutable('2023-12-01'),
+            new DateTimeImmutable('2023-12-01')
+        );
         $this->assertEquals('2024-02-29', $endApplyAt->format('Y-m-d'));
 
-        $recurrence = Contract::RECURRENCE_SEMI_ANNUALly;
-        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            Contract::RECURRENCE_SEMI_ANNUALLY,
+            new DateTimeImmutable('2023-12-01'),
+            new DateTimeImmutable('2023-12-01')
+        );
         $this->assertEquals('2024-05-31', $endApplyAt->format('Y-m-d'));
 
-        $recurrence = Contract::RECURRENCE_ANNUALLY;
-        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            recurrence: Contract::RECURRENCE_ANNUALLY,
+            startApplyAt: new DateTime('2023-12-01'),
+            effectiveDate: new DateTime('2023-12-01'),
+        );
         $this->assertEquals('2024-11-30', $endApplyAt->format('Y-m-d'));
+
+
+        ////////////////////
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            recurrence: Contract::RECURRENCE_ANNUALLY,
+            startApplyAt: new DateTime('2023-02-28'),
+            effectiveDate: new DateTime('2023-02-28'),
+        );
+        $this->assertEquals('2024-02-27', $endApplyAt->format('Y-m-d'));
+
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+            recurrence: Contract::RECURRENCE_ANNUALLY,
+            startApplyAt: new DateTime('2024-03-01'),
+            effectiveDate: new DateTime('2024-03-01'),
+        );
+        $this->assertEquals('2025-02-28', $endApplyAt->format('Y-m-d'));
     }
 
     public function testEvaluateAmountTtc(): void

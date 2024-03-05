@@ -35,12 +35,12 @@ class Contract
 
     const RECURRENCE_MONTHLY = 'monthly';
     const RECURRENCE_QUARTERLY = 'quarterly';
-    const RECURRENCE_SEMI_ANNUALly = 'semi-annually';
+    const RECURRENCE_SEMI_ANNUALLY = 'semi-annually';
     const RECURRENCE_ANNUALLY = 'annually';
     const ALL_RECURRENCE = [
         self::RECURRENCE_MONTHLY,
         self::RECURRENCE_QUARTERLY,
-        self::RECURRENCE_SEMI_ANNUALly,
+        self::RECURRENCE_SEMI_ANNUALLY,
         self::RECURRENCE_ANNUALLY,
     ];
 

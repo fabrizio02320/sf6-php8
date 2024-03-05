@@ -36,6 +36,16 @@ class ReceiptFactory
             $contract->getEffectiveDate()
         );
         $dueDate = $this->evaluateDueDate($startApplyAt, $contract->getDebitDay());
+
+        if ($endApplyAt > $contract->getEndEffectiveDate()) {
+            dump($endApplyAt);
+            dump($contract->getEndEffectiveDate());
+            dump($contract->getRecurrence());
+            dump($contract->getDebitDay());
+            dump($startApplyAt);
+            dump($dueDate);
+            dd($contract->getAnnualPrimeTtc());
+        }
         $amountTtc = $this->evaluateAmountTtc(
             $contract->getEndEffectiveDate(),
             $endApplyAt,
@@ -118,7 +128,7 @@ class ReceiptFactory
 
         $nbMonth = match ($recurrence) {
             Contract::RECURRENCE_QUARTERLY => 3,
-            Contract::RECURRENCE_SEMI_ANNUALly => 6,
+            Contract::RECURRENCE_SEMI_ANNUALLY => 6,
             Contract::RECURRENCE_ANNUALLY => 12,
             default => 1,
         };
@@ -137,7 +147,6 @@ class ReceiptFactory
         $endApplyAt = new DateTime(sprintf('%d-%d-%d', $endApplyYear, $endApplyMonth, 1));
         $lastDayOfMonth = (int)$endApplyAt->format('t');
 
-//        $endApplyDay = $startApplyDay - 1;
         $endApplyDay = $effectiveDay - 1;
         // if startApplyDay is the last day of the month and $effectiveDate->format('t') is the last day of the month,
         // endApplyDay must be the last day of the month - 1 day
@@ -158,6 +167,13 @@ class ReceiptFactory
             $endApplyDay--;
         }
 
+        if (Contract::RECURRENCE_ANNUALLY === $recurrence) {
+            $endApplyDay = (clone $effectiveDate)
+                ->modify('+1 year')
+                ->modify('-1 day')
+                ->format('j');
+        }
+
         return new DateTime(sprintf('%d-%d-%d', $endApplyYear, $endApplyMonth, $endApplyDay));
     }
 
@@ -174,7 +190,7 @@ class ReceiptFactory
 
         $divisor = match ($recurrence) {
             Contract::RECURRENCE_QUARTERLY => 4,
-            Contract::RECURRENCE_SEMI_ANNUALly => 2,
+            Contract::RECURRENCE_SEMI_ANNUALLY => 2,
             Contract::RECURRENCE_ANNUALLY => 1,
             default => 12,
         };
