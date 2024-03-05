@@ -39,18 +39,20 @@
             <th>Date de prélèvement</th>
             <th>Mode de paiement</th>
             <th>Montant</th>
+            <th>Nombre de transaction</th>
         </tr>
         </thead>
         <tbody>
         {% for receipt in contract.receipts %}
             <tr>
-                <td>{{ receipt.id }}</td>
+                <td><a href="{{ path('receipt_show', {'id': receipt.id}) }}">{{ receipt.id }}</a></td>
                 <td>{{ receipt.externalId }}</td>
                 <td>{{ receipt.status }}</td>
                 <td>{{ receipt.startApplyAt|date('Y-m-d') }} au {{ receipt.endApplyAt|date('Y-m-d') }}</td>
                 <td>{{ receipt.dueDate|date('Y-m-d') }}</td>
                 <td>{{ receipt.paymentMode }}</td>
                 <td>{{ receipt.amountTtc }}</td>
+                <td>{{ receipt.transactions|length }}</td>
             </tr>
         {% endfor %}
         </tbody>

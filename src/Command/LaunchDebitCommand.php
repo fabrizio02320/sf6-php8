@@ -91,7 +91,6 @@ EOS
             return Command::INVALID;
         }
 
-        // TODO see to don't call the same contract twice
         $contracts = $this->contractService->findContractsToBilling($debitDate);
         $nbContract = count($contracts);
 

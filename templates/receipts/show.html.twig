@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <h1>Détails d'une quittance</h1>
+    <a href="{{ path('contracts') }}" class="btn btn-primary">Retour à la liste des contrats</a>
+    <a href="{{ path('contract_show', {'id': receipt.contract.id}) }}" class="btn btn-primary">Retour au contrat</a>
+
+    <table class="my-table">
+        <caption>Détail de la quittance {{ receipt.externalId }} (id: {{ receipt.id }})</caption>
+        <thead>
+        <tr>
+            <th>Statut</th>
+            <th>Période</th>
+            <th>Date de prélèvement</th>
+            <th>Mode de paiement</th>
+            <th>Montant</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>{{ receipt.status }}</td>
+            <td>{{ receipt.startApplyAt|date('Y-m-d') }} au {{ receipt.endApplyAt|date('Y-m-d') }}</td>
+            <td>{{ receipt.dueDate|date('Y-m-d') }}</td>
+            <td>{{ receipt.paymentMode }}</td>
+            <td>{{ receipt.amountTtc }}</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <table class="my-table">
+        <caption>Listing des transactions ({{ receipt.transactions|length }})</caption>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Statut</th>
+            <th>Date de la transaction</th>
+            <th>Montant</th>
+            <th>Raison d'échec</th>
+            <th>Date d'échec</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for transaction in receipt.transactions %}
+            <tr>
+                <td>{{ transaction.id }}</td>
+                <td>{{ transaction.status }}</td>
+                <td>{{ transaction.transactionDate|date('Y-m-d') }}</td>
+                <td>{{ transaction.amount }}</td>
+                <td>{{ transaction.failureReason }}</td>
+                <td>{{ transaction.failedAt is not null ? transaction.failedAt|date('Y-m-d') }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

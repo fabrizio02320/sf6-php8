@@ -88,6 +88,8 @@ class ContractRepository extends ServiceEntityRepository
             $qb->setMaxResults($limit);
         }
 
+        $qb->addOrderBy('c.id', 'ASC');
+
         return $qb->getQuery()->getResult();
     }
 

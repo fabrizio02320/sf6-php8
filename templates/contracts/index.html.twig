@@ -1,6 +1,8 @@
 {% extends 'base.html.twig' %}
 
 {% block body %}
+    <h1>Listing des contrats du dispositif de prélèvement</h1>
+
     <form method="get" class="my-form">
         <div>
             <label for="id">ID</label>
@@ -38,6 +40,7 @@
             <th>Montant Annuel</th>
             <th>Mode de prélèvement</th>
             <th>Récurrence</th>
+            <th>Nb quittances</th>
         </tr>
         </thead>
         <tbody>
@@ -52,6 +55,7 @@
                 <td>{{ contract.annualPrimeTtc }}</td>
                 <td>{{ contract.debitMode }}</td>
                 <td>{{ contract.recurrence }}</td>
+                <td>{{ contract.receipts|length }}</td>
             </tr>
         {% endfor %}
         </tbody>

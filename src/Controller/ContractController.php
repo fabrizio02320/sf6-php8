@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Exception\ContractNotFoundException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
@@ -33,7 +34,7 @@ class ContractController extends AbstractController
         $contract = $contractRepository->findById($id);
 
         if (!$contract) {
-            throw $this->createNotFoundException('The contract does not exist');
+            throw new ContractNotFoundException($id);
         }
 
         return $this->render('contracts/show.html.twig', [
