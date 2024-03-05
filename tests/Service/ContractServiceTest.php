@@ -23,7 +23,8 @@ class ContractServiceTest extends TestCase
 
         $this->contractService = new ContractService(
             $this->prophesize(ContractRepository::class)->reveal(),
-            $receiptService
+            $receiptService,
+            $receiptFactory,
         );
     }
 

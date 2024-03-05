@@ -98,7 +98,7 @@ EOS
                 );
 
                 // wait a bit to have different created_at and external_id
-                usleep(10000);
+                usleep(5000);
 
                 if (!$dryRunMode) {
                     $this->em->persist($contract);

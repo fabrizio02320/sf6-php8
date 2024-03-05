@@ -3,6 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Contract;
+use App\Factory\ReceiptFactory;
 use App\Repository\ContractRepository;
 use DateInterval;
 use DateTimeImmutable;
@@ -13,6 +14,7 @@ class  ContractService
     public function __construct(
         private ContractRepository $contractRepository,
         private ReceiptService $receiptService,
+        private ReceiptFactory $receiptFactory,
     ) {}
 
     /**
@@ -23,7 +25,6 @@ class  ContractService
     public function findContractsToBilling(DateTimeImmutable $debitDate): array
     {
         // find about SEPA and CB mode
-        $debitDate = (clone $debitDate)->add(new DateInterval('P1M'));
         $debitDaysConcerned = $this->getDebitDaysConcerned($debitDate);
         $contracts = $this->contractRepository->findContractsToBilling(
             debitDate: $debitDate,
@@ -39,11 +40,28 @@ class  ContractService
                 $debitDate
             );
 
-            if (null === $startApplyAt || $startApplyAt <= $debitDate->add(new DateInterval('P1M'))) {
+            if (null === $startApplyAt) {
                 return false;
             }
 
-            return true;
+            $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+                $contract->getRecurrence(),
+                $startApplyAt,
+                $contract->getEffectiveDate(),
+            );
+
+            $receipt = $contract->getReceiptOnDate($startApplyAt);
+            if (null !== $receipt) {
+                return false;
+            }
+
+            if ($startApplyAt <= $debitDate->add(new DateInterval('P1M'))
+                && $endApplyAt >= $debitDate->add(new DateInterval('P1M'))
+            ) {
+                return true;
+            }
+
+            return false;
         });
 
         // find about nothing mode
@@ -63,17 +81,28 @@ class  ContractService
                     $debitDateWithNothing
                 );
 
-                if ($contract->getId() === 26123) {
-                    dump($startApplyAt);
-                    dd($debitDateWithNothing);
-//                    dd($debitDate);
-                }
-
-                if (null === $startApplyAt || $startApplyAt <= $debitDateWithNothing->add(new DateInterval('P1M'))) {
+                if (null === $startApplyAt) {
                     return false;
                 }
 
-                return true;
+                $endApplyAt = $this->receiptFactory->evaluateEndApplyAt(
+                    $contract->getRecurrence(),
+                    $startApplyAt,
+                    $contract->getEffectiveDate(),
+                );
+
+                $receipt = $contract->getReceiptOnDate($startApplyAt);
+                if (null !== $receipt) {
+                    return false;
+                }
+
+                if ($startApplyAt <= $debitDateWithNothing->add(new DateInterval('P1M'))
+                    && $endApplyAt >= $debitDateWithNothing->add(new DateInterval('P1M'))
+                ) {
+                    return true;
+                }
+
+                return false;
             }
         );
 

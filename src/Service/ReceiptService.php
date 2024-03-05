@@ -21,7 +21,8 @@ class ReceiptService
             $debitDate = (clone $debitDate)->add(new DateInterval('P1M'));
         }
 
-        $receipt = $contract->getReceiptOnDate($debitDate);
+        // TODO continue here
+        $receipt = $contract->getReceiptOnDate($debitDate->add(new DateInterval('P1M')));
         if ($receipt) {
             return $receipt;
         }
@@ -49,39 +50,24 @@ class ReceiptService
         DateTimeImmutable $debitDate
     ): ?DateTimeInterface
     {
-        $startApplyAt = clone $effectiveDate;
+        if (Contract::RECURRENCE_ANNUALLY === $recurrence) {
+            return null;
+        }
+
+        // skip the first debit because it's already paid
+        $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $effectiveDate, $effectiveDate);
+        $startApplyAt = (clone $endApplyAt)->add(new DateInterval('P1D'));
         $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
 
-        $previousStartApplyAt = clone $startApplyAt;
-        $nextApplyAt = (clone $endApplyAt)->add(new DateInterval('P1D'));
-
         // go to the next applyAt date until the debitDate is just before
-        while ($nextApplyAt < $debitDate) {
-            $previousStartApplyAt = clone $nextApplyAt;
-            $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $nextApplyAt, $effectiveDate);
-            $nextApplyAt = (clone $endApplyAt)->add(new DateInterval('P1D'));
-            $startApplyAt = clone $nextApplyAt;
+        while ($startApplyAt < $debitDate) {
+            $startApplyAt = (clone $endApplyAt)->add(new DateInterval('P1D'));
+            $endApplyAt = $this->receiptFactory->evaluateEndApplyAt($recurrence, $startApplyAt, $effectiveDate);
         }
 
-        // if the previous startApplyAt is the same as the effectiveDate and the next applyAt is after the debitDate
-        // then the startApplyAt is the next applyAt
-        if ($previousStartApplyAt->format('Y-m-d') === $effectiveDate->format('Y-m-d')
-            && $nextApplyAt > $debitDate
-        ) {
-            return $nextApplyAt;
-        }
-
-        $nbMonth = match ($recurrence) {
-            Contract::RECURRENCE_MONTHLY => 1,
-            Contract::RECURRENCE_QUARTERLY => 3,
-            Contract::RECURRENCE_SEMI_ANNUALLY => 6,
-            Contract::RECURRENCE_ANNUALLY => 12,
-        };
-
-        if ($previousStartApplyAt < $debitDate
-            && $endApplyAt > $debitDate
-            && $startApplyAt->diff($debitDate)->m < $nbMonth
-            && $startApplyAt->diff($effectiveDate)->m > 0
+        if ($startApplyAt > $debitDate
+            && $startApplyAt <= $debitDate->add(new DateInterval('P1M'))
+            && $endApplyAt >= $debitDate->add(new DateInterval('P1M'))
         ) {
             return $startApplyAt;
         }

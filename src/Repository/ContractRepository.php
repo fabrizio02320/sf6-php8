@@ -3,9 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Contract;
-use App\Entity\Receipt;
 use DateInterval;
-use DateTime;
 use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\Query\Expr;
@@ -31,6 +29,7 @@ class ContractRepository extends ServiceEntityRepository
         array $debitDays,
         array $debitModes,
     ) {
+        $monthlyDebitDate = $debitDate->add(new DateInterval('P1M'));
         $quarterlyDebitDate = $debitDate->add(new DateInterval('P3M'));
         $semiAnnualDebitDate = $debitDate->add(new DateInterval('P6M'));
 
@@ -41,14 +40,14 @@ class ContractRepository extends ServiceEntityRepository
                 'r',
                 Expr\Join::WITH,
                 '
-                (c.recurrence = :monthly AND r.startApplyAt <= :debitDate AND r.endApplyAt >= :debitDate)
+                (c.recurrence = :monthly AND r.startApplyAt <= :monthlyDebitDate AND r.endApplyAt >= :monthlyDebitDate)
                 OR (c.recurrence = :quarterly AND r.startApplyAt <= :quarterlyDebitDate AND r.endApplyAt >= :quarterlyDebitDate)
                 OR (c.recurrence = :semiAnnually AND r.startApplyAt <= :semiAnnualDebitDate AND r.endApplyAt >= :semiAnnualDebitDate)
                 '
             )
             ->where('c.status = :status')
-            ->andWhere('c.effectiveDate <= :debitDate')
-            ->andWhere('c.endEffectiveDate >= :debitDate')
+            ->andWhere('c.effectiveDate <= :monthlyDebitDate')
+            ->andWhere('c.endEffectiveDate >= :monthlyDebitDate')
             ->andWhere('c.debitMode IN (:debitModes)')
             ->andWhere('c.debitDay IN (:debitDays)')
             ->andWhere('c.recurrence != :annually')
@@ -56,13 +55,13 @@ class ContractRepository extends ServiceEntityRepository
             ->orderBy('c.id')
             ->groupBy('c.id')
             ->setParameter('status', Contract::STATUS_IN_PROGRESS)
-            ->setParameter('debitDate', $debitDate)
             ->setParameter('debitModes', $debitModes)
             ->setParameter('debitDays', $debitDays)
             ->setParameter('monthly', Contract::RECURRENCE_MONTHLY)
             ->setParameter('quarterly', Contract::RECURRENCE_QUARTERLY)
             ->setParameter('semiAnnually', Contract::RECURRENCE_SEMI_ANNUALLY)
             ->setParameter('annually', Contract::RECURRENCE_ANNUALLY)
+            ->setParameter('monthlyDebitDate', $monthlyDebitDate)
             ->setParameter('quarterlyDebitDate', $quarterlyDebitDate)
             ->setParameter('semiAnnualDebitDate', $semiAnnualDebitDate)
         ;
